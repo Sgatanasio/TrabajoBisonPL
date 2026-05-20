@@ -53,9 +53,42 @@ extern lp::AST *root;
 
 %type <stmts> stmtlist
 
+%type <st> stmt asgn print read if while block
 
+%type <prog> program
+
+/* Tokens palabras reservadas */
+
+%token SEMICOLON
+%token PRINT READ 
+%token IF THEN ELSE END_IF 
+%token WHILE DO END_WHILE
+%token REPEAT UNTIL FOR END_FOR FROM STEP TO
+%token SWITCH CASE DEFAULT END_SWITCH
+
+%token CLEAR_SCREEN PLACE
+
+%token SIN COS SQURT LOG LOG10 EXP INTEGER ABS
+%token PI E GAMMA PHI DEG
+
+%token TRUE FALSE
+%token OR AND NOT
+
+/* Tokens operadores */
+
+%left CONCAT
+
+%left PLUS MINUS
+%left PROD DIV INT_DIV
+
+%left POW 
+
+%token LESS LESS_EQ MORE MORE_EQ EQUAL NEQUAL
+
+%right ASSIGNMENT
 
 %%
+
 
 
 %%

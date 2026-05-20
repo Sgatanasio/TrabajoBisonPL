@@ -130,6 +130,6 @@ not           {return NOT;}
 "="       {return EQUAL;}
 "<>"      {return NEQUAL;}
 
-":="      {return ASIGN;}
+":="      {return ASSIGNMENT;}
 
 %%
