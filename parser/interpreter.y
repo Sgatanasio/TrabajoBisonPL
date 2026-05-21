@@ -49,23 +49,23 @@ extern lp::AST *root;
 /* Símbolos no terminales */
 %type <expNode> exp cond /* E, C*/
 
-%type <paramenters> listOfExp retOfListOfExp  /* L, L' */
+%type <parameters> listOfExp restOfListOfExp  /* L, L' */
 
 %type <stmts> stmtlist
 
-%type <st> stmt asgn print read read_string clear_screen place if while repeat for switch
+%type <st> stmt asgn print read read_string clear_screen place if while repeat for // switch
 
 %type <prog> program
 
 /* Tokens palabras reservadas */
 
-%token SEMICOLON
+%token SEMICOLON COMMA
 %token PRINT READ READ_STRING
 %token IF THEN ELSE END_IF 
 %token WHILE DO END_WHILE
 %token REPEAT UNTIL 
 %token FOR END_FOR FROM STEP TO
-%token SWITCH CASE DEFAULT END_SWITCH
+/* %token SWITCH CASE DEFAULT END_SWITCH */
 
 %token CLEAR_SCREEN PLACE
 
@@ -91,6 +91,9 @@ extern lp::AST *root;
 %token LESS LESS_EQ MORE MORE_EQ EQUAL NEQUAL
 
 %right ASSIGNMENT
+
+%token VARIABLE CONSTANT NUMBER
+%token BUILTIN 
 
 %%
 
@@ -136,7 +139,7 @@ stmt  : SEMICOLON               {$$ = new lp::EmptyStmt();}
       | while SEMICOLON         {}
       | repeat SEMICOLON        {}
       | for SEMICOLON           {}
-      | switch SEMICOLON        {}
+      // | switch SEMICOLON        {}
 ;
 
 print : PRINT LPAREN exp RPAREN {
@@ -149,6 +152,53 @@ read  : READ LPAREN VARIABLE RPAREN {
       }
       | READ LPAREN CONSTANT RPAREN {
         execerror("Semantic error in \"read() statement \": tried to modify a constant");
+      }
+;
+
+read_string : READ_STRING LPAREN exp RPAREN {
+              $$ = new lp::ReadStringStmt($3);
+            }
+            | READ_STRING LPAREN VARIABLE RPAREN {
+              $$ = new lp::ReadStringStmt($3);
+            }
+            | READ_STRING LPAREN CONSTANT RPAREN {
+              execerror("Semantic error in \"read_string() statement \": tried to modify a constant");
+            }
+;
+
+clear_screen  : CLEAR_SCREEN LPAREN RPAREN {
+                $$ = new lp::ClearScreenStmt();
+              }
+              | CLEAR_SCREEN LPAREN listOfExp RPAREN {
+                execerror("Semantic error in \"clear_screen() statement \": too many arguments");
+              }
+;
+
+place : PLACE LPAREN exp exp RPAREN {
+        $$ = new lp::PlaceStmt($3,$4);
+      }
+      | PLACE LPAREN listOfExp RPAREN {
+        execerror("Semantic error in \"place()\" statement: incompatible number of arguments ");
+      }
+;
+
+
+cond  : LPAREN exp RPAREN {
+        $$ = $2;
+      }
+;
+
+asgn  : VARIABLE ASSIGNMENT exp{
+        $$ = new lp::AssignmentStmt($1,$3);
+      }
+      | VARIABLE ASSIGNMENT asgn{
+        $$ = new lp::AssignmentStmt($1, (lp::AssignmentStmt *) $3);
+      }
+      | CONSTANT ASSIGNMENT exp {
+        execerror("Semantic error in assignment: tried to modify a constant");
+      }
+      | CONSTANT ASSIGNMENT asgn {
+        execerror("Semantic error in assignment: tried to modify a constant");
       }
 ;
 
@@ -170,16 +220,18 @@ exp : NUMBER  {
     | exp MOD exp {
       $$ = new lp::ModuloNode($1,$3);
     }
-    | exp POWER exp {
+    | exp POW exp {
       $$ = new lp::PowerNode($1,$3);
     }
     | exp LESS exp {
       $$ = new lp::LessThanNode($1,$3);
     }
-    
+    | exp CONCAT exp {
+      $$ = new lp::ConcatenationNode($1,$3);
+    }
     | LPAREN exp RPAREN {
       $$ = $2;
-    } 
+    }
     | PLUS exp %prec UNARY {
       $$ = new lp::UnaryPlusNode($2);
     }
@@ -192,8 +244,79 @@ exp : NUMBER  {
     | CONSTANT {
       $$ = new lp::ConstantNode($1);
     }
+    | BUILTIN LPAREN listOfExp RPAREN{
+      lp::Builtin * f = (lp::Builtin *) table.getSymbol($1);
 
+      if(f->getNParameters() == (int) $3->size()){
+        switch(f->getNParamenters()){
+          case 0:
+            $$ = new lp::BuiltinFunctionNode_0($1);
+          break;
+          case 1:{
+            lp::ExpNode * e = $3->front();
+            $$ = new lp::BuiltinFunctionNode_1($1,e);
+          }
+          break;
+          case 2:{
+            lp::ExpNode * e1 = $3->front();
+            $3->pop_front();
+            lp::ExpNode * e2 = $3->front();
+            $$ = new lp::BuiltinFunctionNode_2($1,e1,e2);
+          }
+          break;
+          default:
+            execerror("Syntax error: too many paramenters for function ", $1);
+        }
+      }else{
+        execerror("Syntax error: incopatible number of parameters for function", $1);
+      }
+    }
+    | exp MORE exp {
+      $$ = new lp::GreaterThanNode($1,$3);
+    }
+    | exp MORE_EQ exp {
+      $$ = new lp::GreaterOrEqualNode($1,$3);
+    }
+    | exp LESS exp {
+      $$ = new lp::LessThanNode($1,$3);
+    }
+    | exp LESS_EQ {
+      $$ = new lp::LessOrEqualNode($1,$3);
+    }
+    | exp EQUAL exp {
+      $$ = new lp::EqualNode($1,$3);
+    }
+    | exp NEQUAL exp {
+      $$ = new lp::NotEqualNode($1,$3);
+    }
+    | exp AND exp {
+      $$ = new lp::AndNode($1,$3);
+    }
+    | exp OR exp {
+      $$ = new lp::OrNode($1,$3);
+    }
+    | NOT exp {
+      $$ = new lp::NotNode($2);
+    }
+;
 
+listOfExp :   {
+            $$ = new std::list<lp::ExpNode *>();
+          }
+          | exp restOfListOfExp {
+            $$ = $2;
+            $$->push_front($1);
+          }
+;
+
+restOfListOfExp :   {
+                  $$ = new std::list<lp::ExpNode *>();
+                }
+                | COMMA exp restOfListOfExp{
+                  $$ = $3;
+                  $$->push_front($2);
+                }
+;
 
 controlSymbol: {control++;}
 
