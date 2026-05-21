@@ -40,7 +40,12 @@ NUMBER2       {DIGIT}*\.{DIGIT}+
 
 \n            {lineNumber++;}
 
+"("           {return LPAREN;}
+")"           {return RPAREN;}
+
 ;             {return SEMICOLON;}
+
+/* REHACER EN EL init.hpp */
 
 read          {return READ;}
 read_string   {return READ_STRING;}
