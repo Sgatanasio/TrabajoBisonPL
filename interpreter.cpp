@@ -10,7 +10,7 @@
 #include "error/error.hpp"
 #include "table/init.hpp"
 
-int lineNumber = 1
+int lineNumber = 1;
 
 bool interactiveMode;
 

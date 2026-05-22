@@ -141,6 +141,19 @@ class LogicalOperatorNode : public OperatorNode{
     int getType();
 };
 
+class StringOperatorNode : public OperatorNode{
+  public:
+    StringOperatorNode(ExpNode * L, ExpNode *R): OperatorNode(L,R){}
+    int getType();
+};
+
+class ConcatenationNode : public StringOperatorNode{
+  public:
+    ConcatenationNode(ExpNode * L, ExpNode * R): StringOperatorNode(L,R){}
+    void printAST();
+    std::string evaluateString();
+};
+
 class PlusNode : public NumericOperatorNode{
   public:
     PlusNode(ExpNode *L, ExpNode *R) : NumericOperatorNode(L,R){}
@@ -324,13 +337,46 @@ class PrintStmt: public Statement{
     void evaluate();
 };
 
-class ReadStmt : public Statement
-{
+class ReadStmt : public Statement{
   private:
     std::string _id;
   public:
     ReadStmt(std::string id){
       this->_id = id;
+    }
+
+    void printAST();
+    void evaluate();
+};
+
+class ReadStringStmt: public Statement{
+  private:
+    std::string _id;
+  public:
+    ReadStringStmt(std::string id){
+      this->_id = id;
+    }
+
+    void printAST();
+    void evaluate();
+};
+
+class ClearScreenStmt: public Statement{
+  public: 
+    ClearScreenStmt(){}
+    
+    void printAST();
+    void evaluate();
+};
+
+class PlaceStmt: public Statement{
+  private:
+    ExpNode * _exp1;
+    ExpNode * _exp2;
+  public:
+    PlaceStmt(ExpNode * exp1, ExpNode * exp2){
+      this->_exp1 = exp1;
+      this->_exp2 = exp2;
     }
 
     void printAST();
@@ -378,6 +424,47 @@ class WhileStmt : public Statement{
 
     void printAST();
     void evaluate();
+};
+
+class RepeatStmt : public Statement{
+  private:
+    ExpNode *_cond;
+    Statement *_stmt;
+  public:
+    RepeatStmt(Statement * stmt, ExpNode * cond){
+      _cond = cond;
+      _stmt = stmt;
+    }
+
+    void printAST() override;
+    void evaluate() override;
+};
+
+class ForStmt : public Statement{
+  private:
+    std:: string _var;
+    ExpNode * _from;
+    ExpNode * _to;
+    ExpNode * _step;
+    Statement * _stmt;
+  public:
+    ForStmt(std::string var, ExpNode * from, ExpNode * to, ExpNode * step, Statement * stmt){
+      _var = var;
+      _from = from;
+      _to = to;
+      _step = step;
+      _stmt = stmt;
+    }
+    ForStmt(std::string var, ExpNode * from, ExpNode * to, Statement * stmt){
+      _var = var;
+      _from = from;
+      _to = to;
+      _step = new NumberNode (1.0);
+      _stmt = stmt;
+    }
+
+    void printAST() override;
+    void evaluate() override;
 };
 
 class BlockStmt : public Statement{

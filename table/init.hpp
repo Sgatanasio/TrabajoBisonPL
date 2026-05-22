@@ -67,16 +67,35 @@ static struct {
   \ brief Predefined keywords
 */
 static struct {
-          std::string name ;
+        std::string name;
 	      int token;
 	      } keyword[] = { 
-	                    {"print", PRINT},
-	                    {"read",  READ},
+	          {"print", PRINT},
+	          {"read",  READ},
+            {"read_string", READ_STRING},
 						{"if",	  IF},   	// NEW in example 17
 						{"else",  ELSE}, 	// NEW in example 17
-						{"while", WHILE},	// NEW in example 17
-	                    {"",      0}
-	                   };
+            {"end_if", END_IF},
+            {"while", WHILE},	// NEW in example 17
+	          {"do", DO},
+            {"end_while", END_WHILE},
+            {"repeat", REPEAT},
+            {"until", UNTIL},
+            {"for", FOR},
+            {"end_for",END_FOR},
+            {"from",FROM},
+            {"step",STEP},
+            {"to",TO},
+            {"clear_creen",CLEAR_SCR},
+            {"place", PLACE},
+            {"mod", MOD},
+            {"true", TRUE},
+            {"false", FALSE},
+            {"or", OR},
+            {"and", AND},
+            {"not", NOT},
+            {"",      0}
+	        };
 
 
 
@@ -86,17 +105,17 @@ static struct {    /* Predefined functions names */
                 std::string name ;
 				lp::TypePointerDoubleFunction_1 function;
               } function_1 [] = {
-	                   {"sin",     sin},
-		               {"cos",     cos},
-		               {"atan",    atan},
-		               {"log",     Log},
-		               {"log10",   Log10},
-		               {"exp",     Exp},
-		               {"sqrt",    Sqrt},
-		               {"integer", integer},
-		               {"abs",     fabs},   
-		               {"",       0}
-		              };
+	                {"sin",     sin},
+		              {"cos",     cos},
+		              {"atan",    atan},
+		              {"log",     Log},
+		              {"log10",   Log10},
+		              {"exp",     Exp},
+		              {"sqrt",    Sqrt},
+		              {"integer", integer},
+		              {"abs",     fabs},   
+		              {"",       0}
+		            };
 
 // NEW in example 14
 static struct {   

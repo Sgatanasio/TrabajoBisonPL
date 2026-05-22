@@ -10,7 +10,6 @@ CPP = g++
 # -ansi: standard language
 # -02: optimization level
 CFLAGS = -c -g  -Wall -ansi -O2
-
 # Objects
 OBJECTS= $(NAME).o
 OBJECTS-PARSER = parser/*.o
@@ -41,7 +40,7 @@ INCLUDES = ./parser/interpreter.tab.h ./error/error.hpp \
 #Modified in examples 7, 16
 $(NAME).exe :  parser-dir error-dir table-dir ast-dir $(OBJECTS)
 	@echo "Generating " $(NAME).exe
-	@$(CPP) $(OBJECTS) $(OBJECTS-PARSER) $(OBJECTS-ERROR)  $(OBJECTS-TABLE)  $(OBJECTS-AST) \ -o $(NAME).exe 
+	@$(CPP) $(OBJECTS) $(OBJECTS-PARSER) $(OBJECTS-ERROR) $(OBJECTS-TABLE) $(OBJECTS-AST) \ -o $(NAME).exe 
 
 
 # Main program

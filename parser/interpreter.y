@@ -42,9 +42,10 @@ extern lp::AST *root;
   char * string;
   bool logic;
   lp::ExpNode *expNode;
-  std::list<lp::Statement *> *stmts
+  std::list<lp::Statement *> *stmts;
   lp::Statement *st;
   lp::AST *prog;
+  std::list <lp::ExpNode *> * parameters;
 }
 /* Símbolos no terminales */
 %type <expNode> exp cond /* E, C*/
@@ -67,7 +68,7 @@ extern lp::AST *root;
 %token FOR END_FOR FROM STEP TO
 /* %token SWITCH CASE DEFAULT END_SWITCH */
 
-%token CLEAR_SCREEN PLACE
+%token CLEAR_SCR PLACE
 
 %token SIN COS SQURT LOG LOG10 EXP INTEGER ABS
 %token PI E GAMMA PHI DEG
@@ -92,8 +93,10 @@ extern lp::AST *root;
 
 %right ASSIGNMENT
 
-%token VARIABLE CONSTANT NUMBER
-%token BUILTIN 
+%token <string> VARIABLE CONSTANT
+%token <number> NUMBER
+%token <logic> BOOL
+%token <string> BUILTIN 
 
 %%
 
@@ -106,11 +109,11 @@ stmtlist : { // Si la lista de statements esta vacía (regla epsilon)
   $$ = new std::list<lp::Statement *>();
 }
         | stmtlist stmt { // Si encuentra una lista con más de 1 statement 
-  $$ = $1 // Copia la lista
+  $$ = $1; // Copia la lista
   $$-> push_back($2); // Añade el último statement
 
   if(interactiveMode && control == 0){
-    for(auto it = $$->begin(); it != $$->end(); it++){
+    for(std::list<lp::Statement *>::iterator it = $$->begin(); it != $$->end(); it++){
       (*it)->printAST();
       (*it)->evaluate();
     }
@@ -151,26 +154,23 @@ read  : READ LPAREN VARIABLE RPAREN {
         $$ = new lp::ReadStmt($3);
       }
       | READ LPAREN CONSTANT RPAREN {
-        execerror("Semantic error in \"read() statement \": tried to modify a constant");
+        execerror("Semantic error in \"read() statement \": tried to modify a constant", $3);
       }
 ;
 
-read_string : READ_STRING LPAREN exp RPAREN {
-              $$ = new lp::ReadStringStmt($3);
-            }
-            | READ_STRING LPAREN VARIABLE RPAREN {
+read_string : READ_STRING LPAREN VARIABLE RPAREN {
               $$ = new lp::ReadStringStmt($3);
             }
             | READ_STRING LPAREN CONSTANT RPAREN {
-              execerror("Semantic error in \"read_string() statement \": tried to modify a constant");
+              execerror("Semantic error in \"read_string() statement \": tried to modify a constant", $3);
             }
 ;
 
-clear_screen  : CLEAR_SCREEN LPAREN RPAREN {
+clear_screen  : CLEAR_SCR LPAREN RPAREN {
                 $$ = new lp::ClearScreenStmt();
               }
-              | CLEAR_SCREEN LPAREN listOfExp RPAREN {
-                execerror("Semantic error in \"clear_screen() statement \": too many arguments");
+              | CLEAR_SCR LPAREN listOfExp RPAREN {
+                execerror("Semantic error in \"clear_screen() statement \": too many arguments", "");
               }
 ;
 
@@ -178,7 +178,7 @@ place : PLACE LPAREN exp exp RPAREN {
         $$ = new lp::PlaceStmt($3,$4);
       }
       | PLACE LPAREN listOfExp RPAREN {
-        execerror("Semantic error in \"place()\" statement: incompatible number of arguments ");
+        execerror("Semantic error in \"place()\" statement: incompatible number of arguments", "");
       }
 ;
 
@@ -195,10 +195,10 @@ asgn  : VARIABLE ASSIGNMENT exp{
         $$ = new lp::AssignmentStmt($1, (lp::AssignmentStmt *) $3);
       }
       | CONSTANT ASSIGNMENT exp {
-        execerror("Semantic error in assignment: tried to modify a constant");
+        execerror("Semantic error in assignment: tried to modify a constant ", $1);
       }
       | CONSTANT ASSIGNMENT asgn {
-        execerror("Semantic error in assignment: tried to modify a constant");
+        execerror("Semantic error in assignment: tried to modify a constant", $1);
       }
 ;
 
@@ -223,9 +223,6 @@ exp : NUMBER  {
     | exp POW exp {
       $$ = new lp::PowerNode($1,$3);
     }
-    | exp LESS exp {
-      $$ = new lp::LessThanNode($1,$3);
-    }
     | exp CONCAT exp {
       $$ = new lp::ConcatenationNode($1,$3);
     }
@@ -248,7 +245,7 @@ exp : NUMBER  {
       lp::Builtin * f = (lp::Builtin *) table.getSymbol($1);
 
       if(f->getNParameters() == (int) $3->size()){
-        switch(f->getNParamenters()){
+        switch(f->getNParameters()){
           case 0:
             $$ = new lp::BuiltinFunctionNode_0($1);
           break;
@@ -280,7 +277,7 @@ exp : NUMBER  {
     | exp LESS exp {
       $$ = new lp::LessThanNode($1,$3);
     }
-    | exp LESS_EQ {
+    | exp LESS_EQ exp {
       $$ = new lp::LessOrEqualNode($1,$3);
     }
     | exp EQUAL exp {
@@ -335,39 +332,39 @@ Que puta locura
 */
 ;
 if: IF controlSymbol THEN cond stmtlist END_IF { 
-    lp::BlockStmt* aux = new lp::BlockStmt();
-    $$ = new lp::IfStmt($4, $5);
+    lp::BlockStmt* aux = new lp::BlockStmt($5);
+    $$ = new lp::IfStmt($4, aux);
     control--;
   }
-  | IF controlSymbol THEN cond stmt ELSE stmtlist END_IF { 
-    lp::BlockStmt* aux1 = new lp::BlockStmt();
-    lp::BlockStmt* aux2 = new lp::BlockStmt();
-    $$ = new lp::IfStmt($4, $5, $7, aux1, aux2);
+  | IF controlSymbol THEN cond stmtlist ELSE stmtlist END_IF { 
+    lp::BlockStmt* aux1 = new lp::BlockStmt($5);
+    lp::BlockStmt* aux2 = new lp::BlockStmt($7);
+    $$ = new lp::IfStmt($4, aux1, aux2);
     control--;
   }
 ;
 
 while : WHILE controlSymbol DO cond stmtlist END_WHILE {
-        lp::BlockStmt* aux = new lp::BlockStmt();
-        $$ = new lp::WhileStmt($4, $5, aux);
+        lp::BlockStmt* aux = new lp::BlockStmt($5);
+        $$ = new lp::WhileStmt($4, aux);
         control--;
       }
 ;
 
 repeat  : REPEAT controlSymbol stmtlist UNTIL cond SEMICOLON {
-          lp::BlockStmt* aux = new lp::BlockStmt();
-          $$ = new lp::RepeatStmt($3, $5, aux);
+          lp::BlockStmt* aux = new lp::BlockStmt($3);
+          $$ = new lp::RepeatStmt(aux, $5);
           control--;
         }
 ;
 
 for : FOR controlSymbol VARIABLE FROM exp TO exp DO stmtlist END_FOR {
-    lp::BlockStmt* aux = new lp::BlockStmt();
+    lp::BlockStmt* aux = new lp::BlockStmt($9);
     $$ = new lp::ForStmt($3, $5, $7, aux);
     control--;
     }
     | FOR controlSymbol VARIABLE FROM exp TO exp STEP exp DO stmtlist END_FOR {
-    lp::BlockStmt* aux = new lp::BlockStmt();
+    lp::BlockStmt* aux = new lp::BlockStmt($11);
     $$ = new lp::ForStmt($3,$5,$7,$9,aux);
     control--;
     }
