@@ -75,6 +75,7 @@ static struct {
             {"read_string", READ_STRING},
 						{"if",	  IF},   	// NEW in example 17
 						{"else",  ELSE}, 	// NEW in example 17
+            {"then", THEN},
             {"end_if", END_IF},
             {"while", WHILE},	// NEW in example 17
 	          {"do", DO},
@@ -86,11 +87,9 @@ static struct {
             {"from",FROM},
             {"step",STEP},
             {"to",TO},
-            {"clear_creen",CLEAR_SCR},
+            {"clear_screen",CLEAR_SCR},
             {"place", PLACE},
             {"mod", MOD},
-            {"true", TRUE},
-            {"false", FALSE},
             {"or", OR},
             {"and", AND},
             {"not", NOT},

@@ -22,7 +22,11 @@ namespace lp
 
     virtual bool evaluateBool() {
       return false;
-  }
+    }
+
+    virtual std::string evaluateString(){
+      return "";
+    }
 };
 
 class VariableNode : public ExpNode{
@@ -38,7 +42,7 @@ class VariableNode : public ExpNode{
     void printAST();
     double evaluateNumber();
     bool evaluateBool();
-
+    std::string evaluateString();
 };
 
 class ConstantNode : public ExpNode{
@@ -67,6 +71,20 @@ class NumberNode : public ExpNode{
     int getType();
     void printAST();
     double evaluateNumber();
+};
+
+class StringNode : public ExpNode{
+  private:
+    std::string _str;
+
+  public:
+    StringNode(std::string str){
+      this->_str = str;
+    }
+
+    int getType();
+    void printAST();
+    std::string evaluateString();
 };
 
 class UnaryOperatorNode : public ExpNode{

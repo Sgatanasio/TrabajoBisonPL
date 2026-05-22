@@ -10,6 +10,7 @@
 #include "../includes/macros.hpp"
 #include "../table/numericVariable.hpp"
 #include "../table/logicalVariable.hpp"
+#include "../table/stringVariable.hpp"
 #include "../table/numericConstant.hpp"
 #include "../table/logicalConstant.hpp"
 #include "../table/builtinParameter0.hpp"
@@ -42,6 +43,7 @@ double lp::VariableNode::evaluateNumber(){
 	}
 	return result;
 }
+
 bool lp::VariableNode::evaluateBool(){
 	bool result = false;
 	if (this->getType() == BOOL){
@@ -52,6 +54,17 @@ bool lp::VariableNode::evaluateBool(){
 				   this->_id);
 	}
 	return result;
+}
+
+std::string lp::VariableNode::evaluateString(){
+  std::string result = "";
+  if(this->getType() == STRING){
+    lp::StringVariable * var = (lp::StringVariable *) table.getSymbol(this->_id);
+    result = var->getValue();
+  }else {
+    warning("Runtime error in evaluateString(): the variable is not string", this->_id);
+  }
+  return result;
 }
 
 void lp::ConstantNode::printAST(){
@@ -101,6 +114,18 @@ void lp::NumberNode::printAST(){
 
 double lp::NumberNode::evaluateNumber(){
     return this->_number; 
+}
+
+int lp::StringNode::getType(){
+  return STRING;
+}
+
+void lp::StringNode::printAST(){
+  std::cout << "StringNode: " << this->_str << std::endl;
+}
+
+std::string lp::StringNode::evaluateString(){
+  return this->_str;
 }
 
 int lp::NumericUnaryOperatorNode::getType(){
@@ -757,7 +782,7 @@ void lp::AssignmentStmt::evaluate(){
 }
 
 void lp::PrintStmt::printAST(){
-  std::cout << "printASTStmt: printAST"  << std::endl;
+  std::cout << "printStmt: printAST"  << std::endl;
   std::cout << "\t";
   this->_exp->printAST();
   std::cout << std::endl;
@@ -770,15 +795,16 @@ void lp::PrintStmt::evaluate(){
 
 	switch(this->_exp->getType()){
 		case NUMBER:
-				std::cout << this->_exp->evaluateNumber() << std::endl;
-				break;
+			std::cout << this->_exp->evaluateNumber() << std::endl;
+			break;
 		case BOOL:
 			if (this->_exp->evaluateBool())
 				std::cout << "true" << std::endl;
 			else
 				std::cout << "false" << std::endl;
 			break;
-
+    case STRING:
+      std::cout << this->_exp->evaluateString() <<std::endl;
 		default:
 			warning("Runtime error: incompatible type for ", "print");
 	}

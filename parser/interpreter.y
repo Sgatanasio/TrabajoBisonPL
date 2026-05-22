@@ -94,6 +94,7 @@ extern lp::AST *root;
 %right ASSIGNMENT
 
 %token <string> VARIABLE CONSTANT
+%token <string> STRING
 %token <number> NUMBER
 %token <logic> BOOL
 %token <string> BUILTIN 
@@ -174,8 +175,8 @@ clear_screen  : CLEAR_SCR LPAREN RPAREN {
               }
 ;
 
-place : PLACE LPAREN exp exp RPAREN {
-        $$ = new lp::PlaceStmt($3,$4);
+place : PLACE LPAREN exp COMMA exp RPAREN {
+        $$ = new lp::PlaceStmt($3,$5);
       }
       | PLACE LPAREN listOfExp RPAREN {
         execerror("Semantic error in \"place()\" statement: incompatible number of arguments", "");
@@ -204,6 +205,9 @@ asgn  : VARIABLE ASSIGNMENT exp{
 
 exp : NUMBER  {
       $$ = new lp::NumberNode($1);
+    }
+    | STRING  {
+      $$ = new lp::StringNode($1);
     }
     | exp PLUS exp  {
       $$ = new lp::PlusNode($1,$3);
@@ -331,22 +335,22 @@ la profundidad de las sentencias de control anidadas
 Que puta locura
 */
 ;
-if: IF controlSymbol THEN cond stmtlist END_IF { 
+if: IF controlSymbol cond THEN stmtlist END_IF { 
     lp::BlockStmt* aux = new lp::BlockStmt($5);
-    $$ = new lp::IfStmt($4, aux);
+    $$ = new lp::IfStmt($3, aux);
     control--;
   }
-  | IF controlSymbol THEN cond stmtlist ELSE stmtlist END_IF { 
+  | IF controlSymbol cond THEN stmtlist ELSE stmtlist END_IF { 
     lp::BlockStmt* aux1 = new lp::BlockStmt($5);
     lp::BlockStmt* aux2 = new lp::BlockStmt($7);
-    $$ = new lp::IfStmt($4, aux1, aux2);
+    $$ = new lp::IfStmt($3, aux1, aux2);
     control--;
   }
 ;
 
-while : WHILE controlSymbol DO cond stmtlist END_WHILE {
+while : WHILE controlSymbol cond DO stmtlist END_WHILE {
         lp::BlockStmt* aux = new lp::BlockStmt($5);
-        $$ = new lp::WhileStmt($4, aux);
+        $$ = new lp::WhileStmt($3, aux);
         control--;
       }
 ;

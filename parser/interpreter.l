@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
+#include <string>
 
 #include "../includes/macros.hpp"
 #include "../ast/ast.hpp"
@@ -17,6 +17,31 @@
 extern lp::Table table;
 
 extern int lineNumber;
+
+std::string process_string(const char* s) {
+    std::string result;
+    while (*s) {
+        if (*s == '\\') {
+            ++s;                     // move past the backslash
+            if (*s == '\0') {        // trailing backslash? treat as literal backslash
+                result += '\\';
+                break;
+            }
+            switch (*s) {
+                case 't':  result += '\t'; break;
+                case 'n':  result += '\n'; break;
+                case '\'': result += '\''; break;
+                case '\\': result += '\\'; break;
+                default:   result += *s;   break;   // e.g., "\x" -> 'x'
+            }
+        } else {
+            result += *s;
+        }
+        ++s;
+    }
+    return result;
+}
+
 
 %}
 
@@ -44,6 +69,13 @@ NUMBER2       {DIGIT}*\.{DIGIT}+
 ")"           {return RPAREN;}
 
 ;             {return SEMICOLON;}
+
+\'([^\'\\]|\\.)*\'  {
+  std::string raw(yytext + 1, yytext + strlen(yytext) - 1);
+  std::string processed = process_string(raw.c_str());
+  yylval.string = strdup(processed.c_str());
+  return STRING;
+}
 
 {LETTER}({LETTER}|{DIGIT}|[_])*__({LETTER}|{DIGIT})? {/* ERROR */}
 
