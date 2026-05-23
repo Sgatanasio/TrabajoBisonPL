@@ -170,6 +170,7 @@ class ConcatenationNode : public StringOperatorNode{
     ConcatenationNode(ExpNode * L, ExpNode * R): StringOperatorNode(L,R){}
     void printAST();
     std::string evaluateString();
+    int getType();
 };
 
 class PlusNode : public NumericOperatorNode{
@@ -196,6 +197,13 @@ class MultiplicationNode : public NumericOperatorNode{
 class DivisionNode : public NumericOperatorNode{
   public:
     DivisionNode(ExpNode *L, ExpNode *R): NumericOperatorNode(L,R){}
+    void printAST();
+    double evaluateNumber();
+};
+
+class IntDivisionNode : public NumericOperatorNode{
+  public:
+    IntDivisionNode(ExpNode * L, ExpNode * R): NumericOperatorNode(L,R){}
     void printAST();
     double evaluateNumber();
 };

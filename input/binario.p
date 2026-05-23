@@ -1,5 +1,6 @@
 #  Programa que convierte un número entero a código binario.
 
+
 print('Programa que convierte un número entero a código binario \n');
 print('Introduce un número entero: ');
 read(n);
@@ -13,10 +14,10 @@ while (n <> 0) do
 	else
 		#concatenación con 1
 		r := '1' || r;
-	end_if
+	end_if;
 
 	# Cociente de la división entera
        n := n // 2;
-end_while
+end_while;
 
 print('Número en código binario: ' || r || '\n');

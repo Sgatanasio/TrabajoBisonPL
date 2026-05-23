@@ -221,6 +221,9 @@ exp : NUMBER  {
     | exp DIV exp {
       $$ = new lp::DivisionNode($1,$3);
     }
+    | exp INT_DIV exp {
+      $$ = new lp::IntDivisionNode($1,$3);
+    }
     | exp MOD exp {
       $$ = new lp::ModuloNode($1,$3);
     }

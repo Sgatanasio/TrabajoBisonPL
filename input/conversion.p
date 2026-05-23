@@ -3,7 +3,7 @@
   Se comprueba la conversión de tipo de una variable
 *)
 
-clear_screen;
+clear_screen();
 
 place(3,10);
 print('Ejemplo de cambio del tipo de valor de una variable \n');

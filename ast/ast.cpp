@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <iostream>
 #include <stdlib.h>
 #include <string>
@@ -308,6 +309,35 @@ double lp::DivisionNode::evaluateNumber(){
 	}else{
 		warning("Runtime error: the expressions are not numeric for", "Division");
 	}
+
+  return result;
+}
+
+void lp::IntDivisionNode::printAST(){
+  std::cout << "IntDivisionNode: //" << std::endl;
+  std::cout << "\t";
+  this->_left->printAST();
+  std::cout << "\t";
+  this->_right->printAST();
+}
+
+double lp::IntDivisionNode::evaluateNumber(){
+  double result = 0.0;
+
+  if(this->getType() == NUMBER){
+    double leftNumber, rightNumber;
+
+    leftNumber = this->_left->evaluateNumber();
+    rightNumber = this->_right->evaluateNumber();
+
+    if(std::abs(rightNumber) > ERROR_BOUND){
+      result = std::floor(leftNumber / rightNumber);
+    }else{
+      warning("Runtime error", "Division by zero");
+    }
+  }else{
+    warning("Runtime error: the expressions are not numeric for", "IntDivision");
+  }
 
   return result;
 }
@@ -734,7 +764,21 @@ void lp::AssignmentStmt::evaluate(){
 				}
 			}
 			break;
+      
+      case STRING:
+      {
+        std::string value;
+        value = this->_exp->evaluateString();
 
+        if (firstVar->getType() == STRING){
+          lp::StringVariable *v = (lp::StringVariable *) table.getSymbol(this->_id);
+          v->setValue(value);
+        }else{
+          table.eraseSymbol(this->_id);
+          table.installSymbol(new lp::StringVariable(this->_id,VARIABLE,STRING,value));
+        }
+      }
+      break;
 			default:
 				warning("Runtime error: incompatible type of expression for ", "Assigment");
 		}
@@ -805,6 +849,7 @@ void lp::PrintStmt::evaluate(){
 			break;
     case STRING:
       std::cout << this->_exp->evaluateString() <<std::endl;
+    break;
 		default:
 			warning("Runtime error: incompatible type for ", "print");
 	}
@@ -996,19 +1041,21 @@ void lp::PlaceStmt::evaluate() {
 void lp::ConcatenationNode::printAST() {
   std::cout << "(";
   _left->printAST();
-  std::cout << " + ";
+  std::cout << " || ";
   _right->printAST();
   std::cout << ")";
 }
 
 std::string lp::ConcatenationNode::evaluateString() {
-  // Note: This assumes left and right nodes have evaluateString method
-  // If not, they would need to be cast to appropriate types
-  return "concatenated";  // Simplified implementation
+  return _left->evaluateString() + _right->evaluateString();  // Simplified implementation
 }
 
 // Implementation for StringOperatorNode::getType()
 int lp::StringOperatorNode::getType() {
-  return 0;  // Return appropriate type constant
+  return STRING;  // Return appropriate type constant
+}
+
+int lp::ConcatenationNode::getType() {
+  return STRING;  // Return appropriate type constant
 }
 
