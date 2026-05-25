@@ -93,6 +93,7 @@ static struct {
             {"or", OR},
             {"and", AND},
             {"not", NOT},
+            {":", COLON},
             {"",      0}
 	        };
 

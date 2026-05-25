@@ -904,7 +904,7 @@ void lp::IfStmt::printAST(){
   std::cout << std::endl;
 }
 void lp::IfStmt::evaluate(){
-	if (this->_cond->evaluateBool() == true) 
+	if (_cond == nullptr || this->_cond->evaluateBool()) 
     this->_stmt1->evaluate();
 	else if (this->_stmt2 != NULL)
 		this->_stmt2->evaluate();
@@ -991,10 +991,27 @@ void lp::ForStmt::evaluate() {
   double start = _from->evaluateNumber();
   double end = _to->evaluateNumber();
   double step = (_step != nullptr) ? _step->evaluateNumber() : 1.0;
+  
+  if( std::abs(std::fmod((end - start),step)) > ERROR_BOUND || (end - start) < 0){
+    std::cout << BIRED;
+    std::cout << "ForStmt: WARNING: Infinite Loop" << RESET << std::endl;
+    return;
+  } 
 
-  for (double i = start; i <= end; i += step) {
-    // Set variable value
-    // This would require symbol table access
+  for (double i = start; i != end; i += step) {
+    // Store in symbol table   
+
+    lp::Variable * v = (Variable *) table.getSymbol(this->_var);
+    
+    if(v->getType() == NUMBER){
+      lp::NumericVariable * var = (lp::NumericVariable *) table.getSymbol(this->_var);
+      var->setValue(i);
+    }else{
+      table.eraseSymbol(this->_var);
+      lp::NumericVariable * var = new lp::NumericVariable(_var,VARIABLE,NUMBER,i);
+      table.installSymbol(var);
+    }
+
     _stmt->evaluate();
   }
 }
@@ -1008,7 +1025,17 @@ void lp::ReadStringStmt::evaluate() {
   std::string value;
   std::cout << "Enter value for " << _id << ": ";
   std::cin >> value;
-  // Store in symbol table
+  
+  lp::Variable * v = (Variable *) table.getSymbol(this->_id);
+
+  if(v->getType() == STRING){
+    lp::StringVariable * var = (lp::StringVariable *) table.getSymbol(this->_id);
+    var->setValue(value);
+  }else{
+    table.eraseSymbol(this->_id);
+    lp::StringVariable * var = new lp::StringVariable(_id,VARIABLE,STRING,value);
+    table.installSymbol(var);
+  }
 }
 
 void lp::ClearScreenStmt::printAST() {

@@ -17,12 +17,12 @@
 
 # Bienvenida
 
-clear_screen;
+clear_screen();
 place(10,10);
 print('Introduce tu nombre --> ');
 read_string(nombre);
 
-clear_screen;
+clear_screen();
 place(5,10);
 print(' Bienvenido/a << ');
 print(nombre);
@@ -37,7 +37,7 @@ repeat
 
  # Opciones disponibles
 
- clear_screen;
+ clear_screen();
  place(10,10);
  print(' Factorial de un número --> 1 ');
 
@@ -52,7 +52,7 @@ repeat
 
  read(opcion);
 
- clear_screen;
+ clear_screen();
 
  # Fin del programa
  if (opcion = 0)       		
@@ -148,6 +148,6 @@ repeat
 until (opcion = 0);             
 
 # Despedida final
-clear_screen;
+clear_screen();
 place(10,10);
 print('El programa ha concluido');

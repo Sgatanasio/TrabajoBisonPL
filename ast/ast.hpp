@@ -10,6 +10,7 @@
 
 namespace lp
 {
+ 
  class ExpNode{
   public:
     virtual int getType() = 0;
@@ -501,6 +502,16 @@ class BlockStmt : public Statement{
     void printAST();
     void evaluate();
 };
+
+ class CaseNode {
+    private:
+      ExpNode * _exp;
+      Statement * _stmt;
+    public:
+      CaseNode(ExpNode * e, Statement * s) : _exp(e), _stmt(s){}
+      ExpNode * getExp() {return _exp;}
+      Statement * getStmt() {return _stmt;}
+  };
 
 class AST {
   private:

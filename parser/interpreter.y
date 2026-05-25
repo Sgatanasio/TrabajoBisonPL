@@ -45,7 +45,9 @@ extern lp::AST *root;
   std::list<lp::Statement *> *stmts;
   lp::Statement *st;
   lp::AST *prog;
+  lp::CaseNode * casetype;
   std::list <lp::ExpNode *> * parameters;
+  std::list <lp::CaseNode *> * cases;
 }
 /* Símbolos no terminales */
 %type <expNode> exp cond /* E, C*/
@@ -54,19 +56,23 @@ extern lp::AST *root;
 
 %type <stmts> stmtlist
 
-%type <st> stmt asgn print read read_string clear_screen place if while repeat for // switch
+%type <cases> caselist restOfCaselist
+
+%type <casetype> case
+
+%type <st> stmt asgn print read read_string clear_screen place if while repeat for switch
 
 %type <prog> program
 
 /* Tokens palabras reservadas */
 
-%token SEMICOLON COMMA
+%token SEMICOLON COMMA COLON
 %token PRINT READ READ_STRING
 %token IF THEN ELSE END_IF 
 %token WHILE DO END_WHILE
 %token REPEAT UNTIL 
 %token FOR END_FOR FROM STEP TO
-/* %token SWITCH CASE DEFAULT END_SWITCH */
+%token SWITCH CASE DEFAULT END_SWITCH
 
 %token CLEAR_SCR PLACE
 
@@ -143,7 +149,7 @@ stmt  : SEMICOLON               {$$ = new lp::EmptyStmt();}
       | while SEMICOLON         {}
       | repeat SEMICOLON        {}
       | for SEMICOLON           {}
-      // | switch SEMICOLON        {}
+      | switch SEMICOLON        {}
 ;
 
 print : PRINT LPAREN exp RPAREN {
@@ -304,6 +310,49 @@ exp : NUMBER  {
     }
 ;
 
+case : CASE exp COLON stmtlist {
+        lp::BlockStmt * aux = new lp::BlockStmt($4);
+        $$ = new lp::CaseNode($2,aux);
+     }
+      | CASE exp COLON stmt {
+        std::list<lp::Statement *> *stmts = new std::list<lp::Statement *>();
+        stmts->push_back($4);
+        lp::BlockStmt * aux = new lp::BlockStmt(stmts);
+        $$ = new lp::CaseNode($2,aux);
+     }
+;
+caselist :  {
+            $$ = new std::list<lp::CaseNode *>();
+          }
+          | case restOfCaselist {
+            $$ = $2;
+            $$->push_front($1);
+          }
+          | DEFAULT COLON stmtlist restOfCaselist {
+            lp::BlockStmt* aux = new lp::BlockStmt($3);
+            lp::CaseNode* defCase = new lp::CaseNode(nullptr, aux);
+            $$ = $4;
+            $$->push_front(defCase);
+          }
+          | DEFAULT COLON stmt restOfCaselist {
+            std::list<lp::Statement *> *stmts = new std::list<lp::Statement *>();
+            stmts->push_back($3);
+            lp::BlockStmt* aux = new lp::BlockStmt(stmts);
+            lp::CaseNode* defCase = new lp::CaseNode(nullptr, aux);
+            $$ = $4;
+            $$->push_front(defCase);
+          }
+;
+
+restOfCaselist :  {
+                $$ = new std::list<lp::CaseNode *>();
+               }
+               | case restOfCaselist {
+                $$ = $2;
+                $$->push_front($1);
+               }
+;
+
 listOfExp :   {
             $$ = new std::list<lp::ExpNode *>();
           }
@@ -377,6 +426,45 @@ for : FOR controlSymbol VARIABLE FROM exp TO exp DO stmtlist END_FOR {
     }
 ;
 
+
+switch : SWITCH controlSymbol LPAREN VARIABLE RPAREN caselist END_SWITCH {
+    lp::ExpNode* varNode = new lp::VariableNode($4);
+    lp::Statement* chain = nullptr;
+
+    // caselist is built with push_front, so iterate backwards
+    for (auto it = $6->rbegin(); it != $6->rend(); ++it) {
+        lp::CaseNode* c = *it;
+        if (c->getExp() == nullptr) {
+            // default case: attach as final else without condition
+            chain = new lp::IfStmt(nullptr, c->getStmt(), chain);
+        } else {
+            lp::ExpNode* cond = new lp::EqualNode(varNode, c->getExp());
+            chain = new lp::IfStmt(cond, c->getStmt(), chain);
+        }
+    }
+
+    $$ = chain;
+    control--;
+}
+      | SWITCH LPAREN VARIABLE RPAREN caselist END_SWITCH {
+    lp::ExpNode* varNode = new lp::VariableNode($3);
+    lp::Statement* chain = nullptr;
+
+    // caselist is built with push_front, so iterate backwards
+    for (auto it = $5->rbegin(); it != $5->rend(); ++it) {
+        lp::CaseNode* c = *it;
+        if (c->getExp() == nullptr) {
+            // default case: attach as final else without condition
+            chain = new lp::IfStmt(nullptr, c->getStmt(), chain);
+        } else {
+            lp::ExpNode* cond = new lp::EqualNode(varNode, c->getExp());
+            chain = new lp::IfStmt(cond, c->getStmt(), chain);
+        }
+    }
+
+    $$ = chain;
+}
+;
 
 %%
 
